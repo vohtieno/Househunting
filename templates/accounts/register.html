@@ -3,141 +3,262 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sign Up - Househunting Kenya</title>
+  <title>Sign Up | Househunting</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-50 min-h-screen flex items-center justify-center p-4">
-  <div class="w-full max-w-lg bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
-    <h1 class="text-2xl font-bold text-slate-900">Create an Account</h1>
-    <p class="text-sm text-slate-500 mt-1">How would you like to sign up?</p>
+  {% with active_next=next current_role=role|default:form.role.value|default:"TENANT" %}
+  <div class="w-full max-w-md bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-7">
+    <div class="flex items-center justify-between gap-3">
+      <div>
+        <h1 class="text-xl font-bold text-slate-900">Create Account</h1>
+        <p class="text-xs text-slate-500 mt-0.5">
+          {% if current_role|upper == "OWNER" %}
+            House Owner
+          {% else %}
+            Tenant
+          {% endif %}
+        </p>
+      </div>
+      <a href="{% url 'accounts:choose_role' %}{% if active_next %}?next={{ active_next|urlencode }}{% endif %}"
+         class="shrink-0 text-xs font-medium text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-2.5 py-1.5 rounded-lg transition">
+        Change Role
+      </a>
+    </div>
 
     {% if messages %}
       <div class="mt-4 space-y-2">
         {% for message in messages %}
-          <div class="p-3 rounded-lg text-sm bg-amber-50 text-amber-800 border border-amber-200">{{ message }}</div>
+          <div class="p-2.5 rounded-lg text-xs bg-amber-50 text-amber-800 border border-amber-200">{{ message }}</div>
         {% endfor %}
       </div>
     {% endif %}
 
     {% if form.errors %}
-      <div class="mt-4 p-3 rounded-lg text-sm bg-red-50 text-red-700 border border-red-200">
-        {{ form.errors }}
+      <div class="mt-4 p-2.5 rounded-lg text-xs bg-red-50 text-red-700 border border-red-200 space-y-1">
+        {% for field, errors in form.errors.items %}
+          {% for error in errors %}
+            <div>{% if field != '__all__' %}<strong>{{ field|title }}:</strong> {% endif %}{{ error }}</div>
+          {% endfor %}
+        {% endfor %}
       </div>
     {% endif %}
 
-    <form method="post" class="mt-5 space-y-4">
+    <form method="post" id="register-form" novalidate class="mt-5 space-y-3.5">
       {% csrf_token %}
-      <input type="hidden" name="next" value="{{ next }}">
-      <input type="hidden" name="role" id="id_role" value="{{ form.role.value|default:'CUSTOMER' }}">
+      <input type="hidden" name="next" value="{{ active_next }}">
+      <input type="hidden" name="role" value="{{ current_role|upper }}">
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="role-cards">
-        <button type="button" data-role="CUSTOMER"
-                class="role-card text-left p-4 rounded-xl border-2 transition focus:outline-none">
-          <div class="text-sm font-bold text-slate-900">Customer / Tenant</div>
-          <div class="text-xs text-slate-500 mt-0.5">Find & reserve vacant houses</div>
-        </button>
-
-        <button type="button" data-role="OWNER"
-                class="role-card text-left p-4 rounded-xl border-2 transition focus:outline-none">
-          <div class="text-sm font-bold text-slate-900">House Owner</div>
-          <div class="text-xs text-slate-500 mt-0.5">List & manage your properties</div>
-        </button>
-      </div>
-
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
         <div>
-          <label class="block text-sm font-medium text-slate-700">Username *</label>
-          <input type="text" name="username" value="{{ form.username.value|default:'' }}" required
-                 class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+          <label for="id_username" class="block text-xs font-medium text-slate-700">Username</label>
+          <input id="id_username" type="text" name="username" value="{{ form.username.value|default:'' }}"
+                 pattern="^[A-Za-z0-9_.-]{3,30}$" required
+                 class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-slate-900 focus:outline-none">
+          <p class="field-error hidden text-[11px] text-red-600 mt-1"></p>
         </div>
+
         <div>
-          <label class="block text-sm font-medium text-slate-700">Phone Number (M-Pesa) *</label>
-          <input type="text" name="phone" value="{{ form.phone.value|default:'' }}" placeholder="0712345678" required
-                 class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+          <label for="id_phone" class="block text-xs font-medium text-slate-700">Phone</label>
+          <input id="id_phone" type="tel" name="phone" value="{{ form.phone.value|default:'' }}"
+                 placeholder="0712345678" pattern="^(?:0|\+?254)[17]\d{8}$" required
+                 class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-slate-900 focus:outline-none">
+          <p class="field-error hidden text-[11px] text-red-600 mt-1"></p>
         </div>
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-slate-700">Email Address *</label>
-        <input type="email" name="email" value="{{ form.email.value|default:'' }}" required
-               class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+        <label for="id_email" class="block text-xs font-medium text-slate-700">Email</label>
+        <input id="id_email" type="email" name="email" value="{{ form.email.value|default:'' }}" required
+               class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-slate-900 focus:outline-none">
+        <p class="field-error hidden text-[11px] text-red-600 mt-1"></p>
       </div>
 
-      <div id="customer-fields" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label class="block text-sm font-medium text-slate-700">Preferred Location</label>
-          <input type="text" name="preferred_location" value="{{ form.preferred_location.value|default:'' }}" placeholder="e.g. Njoro, Nakuru"
-                 class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+      {% if current_role|upper != "OWNER" %}
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <div>
+            <label for="id_preferred_location" class="block text-xs font-medium text-slate-700">Location</label>
+            <input id="id_preferred_location" type="text" name="preferred_location"
+                   value="{{ form.preferred_location.value|default:'' }}" placeholder="Njoro, Nakuru"
+                   class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-slate-900 focus:outline-none">
+            <p class="field-error hidden text-[11px] text-red-600 mt-1"></p>
+          </div>
+          <div>
+            <label for="id_budget" class="block text-xs font-medium text-slate-700">Budget (KES)</label>
+            <input id="id_budget" type="number" min="100" step="1" name="budget"
+                   value="{{ form.budget.value|default:'' }}" placeholder="15000"
+                   class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-slate-900 focus:outline-none">
+            <p class="field-error hidden text-[11px] text-red-600 mt-1"></p>
+          </div>
         </div>
+      {% endif %}
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
         <div>
-          <label class="block text-sm font-medium text-slate-700">Monthly Budget (KES)</label>
-          <input type="number" step="0.01" name="budget" value="{{ form.budget.value|default:'' }}" placeholder="15000"
-                 class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+          <label for="id_password" class="block text-xs font-medium text-slate-700">Password</label>
+          <div class="relative mt-1">
+            <input id="id_password" type="password" name="password" minlength="8" required
+                   class="w-full rounded-lg border border-slate-300 pl-3 pr-9 py-2 text-sm focus:border-slate-900 focus:outline-none">
+            <button type="button" data-toggle-password="id_password" aria-label="Show password"
+                    class="absolute inset-y-0 right-0 px-2.5 flex items-center text-slate-500 hover:text-slate-800">
+              <svg class="w-4 h-4 eye-open" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12s3.75-6.75 9.75-6.75S21.75 12 21.75 12s-3.75 6.75-9.75 6.75S2.25 12 2.25 12z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+              <svg class="w-4 h-4 eye-closed hidden" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18M10.58 10.58a2 2 0 002.83 2.83M9.88 4.24A9.77 9.77 0 0112 4.25c6 0 9.75 7.75 9.75 7.75a17.6 17.6 0 01-3.17 4.36M6.61 6.61A17.7 17.7 0 002.25 12s3.75 6.75 9.75 6.75a9.7 9.7 0 005.12-1.45" />
+              </svg>
+            </button>
+          </div>
+          <p class="field-error hidden text-[11px] text-red-600 mt-1"></p>
+        </div>
+
+        <div>
+          <label for="id_confirm_password" class="block text-xs font-medium text-slate-700">Confirm Password</label>
+          <div class="relative mt-1">
+            <input id="id_confirm_password" type="password" name="confirm_password" minlength="8" required
+                   class="w-full rounded-lg border border-slate-300 pl-3 pr-9 py-2 text-sm focus:border-slate-900 focus:outline-none">
+            <button type="button" data-toggle-password="id_confirm_password" aria-label="Show password"
+                    class="absolute inset-y-0 right-0 px-2.5 flex items-center text-slate-500 hover:text-slate-800">
+              <svg class="w-4 h-4 eye-open" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12s3.75-6.75 9.75-6.75S21.75 12 21.75 12s-3.75 6.75-9.75 6.75S2.25 12 2.25 12z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+              <svg class="w-4 h-4 eye-closed hidden" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18M10.58 10.58a2 2 0 002.83 2.83M9.88 4.24A9.77 9.77 0 0112 4.25c6 0 9.75 7.75 9.75 7.75a17.6 17.6 0 01-3.17 4.36M6.61 6.61A17.7 17.7 0 002.25 12s3.75 6.75 9.75 6.75a9.7 9.7 0 005.12-1.45" />
+              </svg>
+            </button>
+          </div>
+          <p class="field-error hidden text-[11px] text-red-600 mt-1"></p>
         </div>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label class="block text-sm font-medium text-slate-700">Password *</label>
-          <input type="password" name="password" required
-                 class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-slate-700">Confirm Password *</label>
-          <input type="password" name="confirm_password" required
-                 class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
-        </div>
+      <div class="pt-1 flex justify-end">
+        <button type="submit"
+                class="w-full sm:w-auto px-5 py-2 rounded-lg text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 transition">
+          Create Account
+        </button>
       </div>
-
-      <button type="submit" id="submit-btn"
-              class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 rounded-lg text-sm">
-        Sign Up as Customer / Tenant & Verify Email
-      </button>
     </form>
 
-    <p class="mt-6 text-center text-sm text-slate-600">
-      Already have an account?
-      <a href="{% url 'accounts:login' %}{% if next %}?next={{ next|urlencode }}{% endif %}" class="text-emerald-600 font-medium hover:underline">Log in</a>
+    <p class="mt-5 text-center text-xs text-slate-600">
+      Have an account?
+      <a href="{% url 'accounts:login' %}{% if active_next %}?next={{ active_next|urlencode }}{% endif %}"
+         class="font-semibold text-slate-900 hover:underline">Log in</a>
     </p>
   </div>
+  {% endwith %}
 
   <script>
-    const roleInput = document.getElementById("id_role");
-    const roleCards = document.querySelectorAll(".role-card");
-    const customerFields = document.getElementById("customer-fields");
-    const submitBtn = document.getElementById("submit-btn");
-
-    const roleLabels = {
-      CUSTOMER: "Customer / Tenant",
-      OWNER: "House Owner",
-    };
-
-    function selectRole(role) {
-      roleInput.value = role;
-
-      roleCards.forEach((card) => {
-        const isSelected = card.dataset.role === role;
-        card.classList.toggle("border-emerald-600", isSelected);
-        card.classList.toggle("bg-emerald-50", isSelected);
-        card.classList.toggle("border-slate-200", !isSelected);
-        card.classList.toggle("bg-white", !isSelected);
+    document.querySelectorAll("[data-toggle-password]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const input = document.getElementById(btn.dataset.togglePassword);
+        const isHidden = input.type === "password";
+        input.type = isHidden ? "text" : "password";
+        btn.querySelector(".eye-open").classList.toggle("hidden", isHidden);
+        btn.querySelector(".eye-closed").classList.toggle("hidden", !isHidden);
+        btn.setAttribute("aria-label", isHidden ? "Hide password" : "Show password");
       });
-
-      customerFields.style.display = role === "CUSTOMER" ? "grid" : "none";
-      submitBtn.textContent = `Sign Up as ${roleLabels[role] || "User"} & Verify Email`;
-    }
-
-    roleCards.forEach((card) => {
-      card.addEventListener("click", () => selectRole(card.dataset.role));
     });
 
-    const params = new URLSearchParams(window.location.search);
-    const preselectedRole = params.get("role");
-    if (preselectedRole && roleLabels[preselectedRole.toUpperCase()]) {
-      selectRole(preselectedRole.toUpperCase());
-    } else {
-      selectRole(roleInput.value || "CUSTOMER");
+    const form = document.getElementById("register-form");
+    const usernameInput = document.getElementById("id_username");
+    const phoneInput = document.getElementById("id_phone");
+    const emailInput = document.getElementById("id_email");
+    const budgetInput = document.getElementById("id_budget");
+    const passwordInput = document.getElementById("id_password");
+    const confirmInput = document.getElementById("id_confirm_password");
+
+    function setFieldError(input, message) {
+      if (!input) return true;
+      const wrapper = input.closest("div").parentElement?.classList.contains("relative")
+        ? input.closest("div").parentElement
+        : input.parentElement;
+      const errEl = wrapper.querySelector(".field-error");
+      if (message) {
+        input.classList.add("border-red-500");
+        input.classList.remove("border-slate-300");
+        if (errEl) {
+          errEl.textContent = message;
+          errEl.classList.remove("hidden");
+        }
+        return false;
+      }
+      input.classList.remove("border-red-500");
+      input.classList.add("border-slate-300");
+      if (errEl) {
+        errEl.textContent = "";
+        errEl.classList.add("hidden");
+      }
+      return true;
     }
+
+    function validateField(input) {
+      if (!input) return true;
+      const val = input.value.trim();
+
+      if (input === usernameInput) {
+        if (!val) return setFieldError(input, "Username is required.");
+        if (!/^[A-Za-z0-9_.-]{3,30}$/.test(val)) return setFieldError(input, "3-30 letters, numbers, . _ -");
+        return setFieldError(input, "");
+      }
+
+      if (input === phoneInput) {
+        if (!val) return setFieldError(input, "Phone is required.");
+        if (!/^(?:0|\+?254)[17]\d{8}$/.test(val.replace(/\s+/g, ""))) {
+          return setFieldError(input, "Enter a valid Kenyan mobile number.");
+        }
+        return setFieldError(input, "");
+      }
+
+      if (input === emailInput) {
+        if (!val) return setFieldError(input, "Email is required.");
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) return setFieldError(input, "Enter a valid email.");
+        return setFieldError(input, "");
+      }
+
+      if (input === budgetInput && val !== "") {
+        if (Number(val) < 100) return setFieldError(input, "Minimum budget is 100.");
+        return setFieldError(input, "");
+      }
+
+      if (input === passwordInput) {
+        if (!input.value) return setFieldError(input, "Password is required.");
+        if (input.value.length < 8) return setFieldError(input, "At least 8 characters.");
+        if (confirmInput.value) validateField(confirmInput);
+        return setFieldError(input, "");
+      }
+
+      if (input === confirmInput) {
+        if (!input.value) return setFieldError(input, "Confirm your password.");
+        if (input.value !== passwordInput.value) return setFieldError(input, "Passwords do not match.");
+        return setFieldError(input, "");
+      }
+
+      return true;
+    }
+
+    [usernameInput, phoneInput, emailInput, budgetInput, passwordInput, confirmInput].forEach((input) => {
+      if (!input) return;
+      input.addEventListener("blur", () => validateField(input));
+      input.addEventListener("input", () => {
+        if (input.classList.contains("border-red-500")) validateField(input);
+      });
+    });
+
+    form.addEventListener("submit", (e) => {
+      const checks = [
+        validateField(usernameInput),
+        validateField(phoneInput),
+        validateField(emailInput),
+        validateField(budgetInput),
+        validateField(passwordInput),
+        validateField(confirmInput),
+      ];
+      if (!checks.every(Boolean)) {
+        e.preventDefault();
+      }
+    });
   </script>
 </body>
 </html>

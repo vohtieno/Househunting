@@ -4,60 +4,34 @@ from django.urls import include, path
 
 
 urlpatterns = [
-
     # Main website and authentication
-    path(
-        "",
-        include("core.urls")
-    ),
+    path("", include("core.urls")),
 
     # User accounts
-    path(
-        "accounts/",
-        include("accounts.urls")
-    ),
+    path("accounts/", include("accounts.urls")),
 
     # Properties and listings
-    path(
-        "properties/",
-        include("properties.urls")
-    ),
+    path("properties/", include("properties.urls")),
 
     # Subscriptions
-    path(
-        "subscriptions/",
-        include("subscriptions.urls")
-    ),
+    path("subscriptions/", include("subscriptions.urls")),
 
     # Payments
-    path(
-        "payments/",
-        include("payments.urls")
-    ),
+    path("payments/", include("payments.urls")),
 
     # Customer inquiries
-    path(
-        "inquiries/",
-        include("inquiries.urls")
-    ),
+    path("inquiries/", include("inquiries.urls")),
 
     # Customer/Owner dashboards
-    path(
-        "dashboard/",
-        include("dashboard.urls")
-    ),
+    path("dashboard/", include("dashboard.urls")),
 
-    # OUR CUSTOM ADMINISTRATION
-    path(
-        "administration/",
-        include("administration.urls")
-    ),
+    # Custom administration
+    path("administration/", include("administration.urls")),
 ]
-
 
 # Serve uploaded media during development
 if settings.DEBUG:
     urlpatterns += static(
         settings.MEDIA_URL,
-        document_root=settings.MEDIA_ROOT
+        document_root=settings.MEDIA_ROOT,
     )

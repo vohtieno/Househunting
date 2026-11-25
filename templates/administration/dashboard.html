@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - Househunting Kenya</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-900">
+  <nav class="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
+    <div>
+      <span class="font-bold text-lg text-emerald-700">Househunting Admin</span>
+      <span class="ml-2 text-xs px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 font-medium">
+        Administrator
+      </span>
+    </div>
+    <form method="post" action="{% url 'accounts:logout' %}">
+      {% csrf_token %}
+      <button type="submit" class="text-sm text-red-600 font-medium hover:underline">Log out</button>
+    </form>
+  </nav>
+
+  <main class="max-w-6xl mx-auto p-6 space-y-6">
+    {% if messages %}
+      <div class="space-y-2">
+        {% for message in messages %}
+          <div class="p-3 rounded-lg text-sm bg-emerald-50 text-emerald-800 border border-emerald-200">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div class="bg-white p-5 rounded-xl border border-slate-200">
+        <div class="text-xs text-slate-500">Total Users</div>
+        <div class="text-2xl font-bold mt-1">{{ total_users }}</div>
+        <div class="text-xs text-slate-400 mt-1">{{ total_customers }} customers · {{ total_owners }} owners</div>
+      </div>
+      <div class="bg-white p-5 rounded-xl border border-slate-200">
+        <div class="text-xs text-slate-500">Properties</div>
+        <div class="text-2xl font-bold mt-1">{{ total_properties }}</div>
+        <div class="text-xs text-amber-600 mt-1">{{ pending_properties }} pending review</div>
+      </div>
+      <div class="bg-white p-5 rounded-xl border border-slate-200">
+        <div class="text-xs text-slate-500">Active Subscriptions</div>
+        <div class="text-2xl font-bold mt-1">{{ active_subscriptions }}</div>
+        <div class="text-xs text-slate-400 mt-1">{{ total_plans }} plans configured</div>
+      </div>
+      <div class="bg-white p-5 rounded-xl border border-slate-200">
+        <div class="text-xs text-slate-500">Inquiries</div>
+        <div class="text-2xl font-bold mt-1">{{ total_inquiries }}</div>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

@@ -1,13 +1,18 @@
+from urllib.parse import quote
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 
 from .forms import LoginForm, RegisterForm, VerifyEmailForm
 from .models import EmailOTP, User
+
+ALLOWED_SIGNUP_ROLES = {User.Role.CUSTOMER, User.Role.OWNER}
 
 
 def _get_safe_next_url(request, fallback=None):
@@ -19,6 +24,19 @@ def _get_safe_next_url(request, fallback=None):
     ):
         return next_url
     return None
+
+
+def _resolve_role(request):
+    raw_role = (request.POST.get("role") or request.GET.get("role") or User.Role.CUSTOMER).upper()
+    return raw_role if raw_role in ALLOWED_SIGNUP_ROLES else User.Role.CUSTOMER
+
+
+def _get_role_home_url(user):
+    if user.role == User.Role.ADMIN or user.is_superuser:
+        return reverse("administration:dashboard")
+    if user.role == User.Role.OWNER:
+        return reverse("dashboard:home")
+    return reverse("dashboard:home")
 
 
 def _send_verification_otp(user):
@@ -40,21 +58,43 @@ def _send_verification_otp(user):
     return otp
 
 
-def register_view(request):
+def _build_login_redirect(saved_next):
+    login_url = reverse("accounts:login")
+    if saved_next:
+        return redirect(f"{login_url}?next={quote(saved_next, safe='')}")
+    return redirect("accounts:login")
+
+
+def choose_role_view(request):
     if request.user.is_authenticated:
-        return redirect("dashboard:home")
+        return redirect(_get_role_home_url(request.user))
 
     next_url = _get_safe_next_url(request)
+    return render(
+        request,
+        "accounts/choose_role.html",
+        {"next": next_url or ""},
+    )
+
+
+def register_view(request):
+    if request.user.is_authenticated:
+        return redirect(_get_role_home_url(request.user))
+
+    next_url = _get_safe_next_url(request)
+    selected_role = _resolve_role(request)
 
     if request.method == "POST":
-        form = RegisterForm(request.POST)
+        post_data = request.POST.copy()
+        post_data["role"] = selected_role
+        form = RegisterForm(post_data)
         if form.is_valid():
             data = form.cleaned_data
             user = User.objects.create_user(
                 username=data["username"],
                 email=data["email"],
                 password=data["password"],
-                role=data["role"],
+                role=selected_role,
                 phone=data["phone"].strip(),
                 preferred_location=(data.get("preferred_location") or "").strip(),
                 budget=data.get("budget"),
@@ -72,12 +112,16 @@ def register_view(request):
             )
             return redirect("accounts:verify_email")
     else:
-        form = RegisterForm()
+        form = RegisterForm(initial={"role": selected_role})
 
     return render(
         request,
         "accounts/register.html",
-        {"form": form, "next": next_url or ""},
+        {
+            "form": form,
+            "role": selected_role,
+            "next": next_url or "",
+        },
     )
 
 
@@ -94,9 +138,7 @@ def verify_email_view(request):
         request.session.pop("pending_verification_user_id", None)
         request.session.pop("post_verify_next_url", None)
         messages.info(request, "Your email is already verified. Please log in.")
-        if saved_next:
-            return redirect(f"/accounts/login/?next={saved_next}")
-        return redirect("accounts:login")
+        return _build_login_redirect(saved_next)
 
     if request.method == "POST":
         form = VerifyEmailForm(request.POST)
@@ -122,9 +164,7 @@ def verify_email_view(request):
                 request.session.pop("pending_verification_user_id", None)
                 request.session.pop("post_verify_next_url", None)
                 messages.success(request, "Email verified successfully! Please log in to continue.")
-                if saved_next:
-                    return redirect(f"/accounts/login/?next={saved_next}")
-                return redirect("accounts:login")
+                return _build_login_redirect(saved_next)
     else:
         form = VerifyEmailForm()
 
@@ -154,11 +194,7 @@ def login_view(request):
     next_url = _get_safe_next_url(request)
 
     if request.user.is_authenticated:
-        if next_url:
-            return redirect(next_url)
-        if request.user.role == User.Role.ADMIN or request.user.is_superuser:
-            return redirect("administration:dashboard")
-        return redirect("dashboard:home")
+        return redirect(next_url or _get_role_home_url(request.user))
 
     if request.method == "POST":
         form = LoginForm(request.POST)
@@ -183,12 +219,7 @@ def login_view(request):
 
                 login(request, user)
                 messages.success(request, f"Welcome back, {user.username}!")
-
-                if next_url:
-                    return redirect(next_url)
-                if is_admin:
-                    return redirect("administration:dashboard")
-                return redirect("dashboard:home")
+                return redirect(next_url or _get_role_home_url(user))
 
             messages.error(request, "Invalid username or password.")
     else:

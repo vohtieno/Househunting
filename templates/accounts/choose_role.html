@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create an Account | Househunting</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 min-h-screen flex items-center justify-center p-4">
+  {% with active_next=next %}
+  <div class="w-full max-w-2xl text-center">
+    <h1 class="text-2xl font-bold text-slate-900">Create an Account</h1>
+    <p class="text-slate-600 mt-1.5 text-sm">Select your account type</p>
+
+    {% if messages %}
+      <div class="mt-4 max-w-lg mx-auto space-y-2 text-left">
+        {% for message in messages %}
+          <div class="p-2.5 rounded-lg text-xs bg-amber-50 text-amber-800 border border-amber-200">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <div class="mt-7 grid grid-cols-1 sm:grid-cols-2 gap-5 max-w-xl mx-auto">
+      <!-- Tenant Card -->
+      <a href="{% url 'accounts:register' %}?role=TENANT{% if active_next %}&next={{ active_next|urlencode }}{% endif %}"
+         class="group bg-white rounded-2xl p-6 shadow-sm hover:shadow-md border border-slate-200 hover:border-slate-900 transition-all duration-200 flex flex-col items-center text-center">
+        <h2 class="text-lg font-bold text-slate-900">Tenant</h2>
+        <p class="text-slate-600 text-xs mt-2 mb-5 leading-relaxed">
+          Browse vacant houses, schedule viewings, and pay deposits.
+        </p>
+        <span class="mt-auto inline-block bg-slate-900 group-hover:bg-slate-800 text-white font-semibold text-xs px-4 py-2 rounded-lg transition">
+          Continue as Tenant
+        </span>
+      </a>
+
+      <!-- Owner Card -->
+      <a href="{% url 'accounts:register' %}?role=OWNER{% if active_next %}&next={{ active_next|urlencode }}{% endif %}"
+         class="group bg-white rounded-2xl p-6 shadow-sm hover:shadow-md border border-slate-200 hover:border-emerald-700 transition-all duration-200 flex flex-col items-center text-center">
+        <h2 class="text-lg font-bold text-slate-900">House Owner</h2>
+        <p class="text-slate-600 text-xs mt-2 mb-5 leading-relaxed">
+          List properties, manage units, and respond to tenant inquiries.
+        </p>
+        <span class="mt-auto inline-block bg-emerald-600 group-hover:bg-emerald-700 text-white font-semibold text-xs px-4 py-2 rounded-lg transition">
+          Continue as Owner
+        </span>
+      </a>
+    </div>
+
+    <p class="mt-6 text-xs text-slate-600">
+      Already have an account?
+      <a href="{% url 'accounts:login' %}{% if active_next %}?next={{ active_next|urlencode }}{% endif %}"
+         class="text-slate-900 font-semibold hover:underline">
+        Log in
+      </a>
+    </p>
+  </div>
+  {% endwith %}
+</body>
+</html>
