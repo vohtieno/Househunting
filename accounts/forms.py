@@ -7,6 +7,8 @@ from .models import OwnerVerification, User
 
 PHONE_RE = re.compile(r"^(?:0|\+?254)[17]\d{8}$")
 USERNAME_RE = re.compile(r"^[A-Za-z0-9_.-]{3,30}$")
+ALLOWED_DOC_EXTENSIONS = (".pdf", ".jpg", ".jpeg", ".png")
+MAX_DOC_SIZE = 10 * 1024 * 1024  # 10 MB
 
 
 class RegisterForm(forms.Form):
@@ -74,4 +76,44 @@ class LoginForm(forms.Form):
 class OwnerVerificationForm(forms.ModelForm):
     class Meta:
         model = OwnerVerification
-        fields = ["national_id", "title_deed_ref", "property_address", "document"]
+        fields = [
+            "national_id",
+            "chief_phone",
+            "property_address",
+            "title_deed_document",
+            "house_document",
+        ]
+
+    def clean_national_id(self):
+        nid = self.cleaned_data["national_id"].strip()
+        if not nid.isdigit() or not (6 <= len(nid) <= 10):
+            raise forms.ValidationError("Enter a valid National ID number.")
+        return nid
+
+    def clean_chief_phone(self):
+        phone = re.sub(r"\s+", "", self.cleaned_data["chief_phone"].strip())
+        if not PHONE_RE.match(phone):
+            raise forms.ValidationError("Enter a valid Kenyan phone number for the area Chief.")
+        return phone
+
+    def _validate_upload(self, uploaded_file, label):
+        if not uploaded_file:
+            raise forms.ValidationError(f"{label} is required.")
+        filename = uploaded_file.name.lower()
+        if not filename.endswith(ALLOWED_DOC_EXTENSIONS):
+            raise forms.ValidationError("Upload a PDF, JPG, or PNG file.")
+        if uploaded_file.size > MAX_DOC_SIZE:
+            raise forms.ValidationError("File size must be under 10 MB.")
+        return uploaded_file
+
+    def clean_title_deed_document(self):
+        return self._validate_upload(
+            self.cleaned_data.get("title_deed_document"),
+            "Title Deed / Official Land Search",
+        )
+
+    def clean_house_document(self):
+        return self._validate_upload(
+            self.cleaned_data.get("house_document"),
+            "House Ownership / Building / Utility Document",
+        )

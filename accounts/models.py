@@ -1,3 +1,5 @@
+import random
+
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
@@ -38,8 +40,6 @@ class EmailOTP(models.Model):
 
     @classmethod
     def generate_for_user(cls, user):
-        import random
-
         cls.objects.filter(user=user, is_used=False).update(is_used=True)
         code = f"{random.randint(0, 999999):06d}"
         expires_at = timezone.now() + timezone.timedelta(minutes=15)
@@ -64,9 +64,10 @@ class OwnerVerification(models.Model):
         related_name="owner_verification",
     )
     national_id = models.CharField(max_length=30)
-    title_deed_ref = models.CharField(max_length=100)
+    chief_phone = models.CharField(max_length=20)
     property_address = models.CharField(max_length=200)
-    document = models.FileField(upload_to="owner_verifications/", blank=True, null=True)
+    title_deed_document = models.FileField(upload_to="owner_verifications/title_deeds/")
+    house_document = models.FileField(upload_to="owner_verifications/house_docs/")
     status = models.CharField(
         max_length=15,
         choices=Status.choices,

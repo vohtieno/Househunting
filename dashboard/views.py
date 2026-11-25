@@ -19,7 +19,7 @@ def verified_owner_required(view_func):
         if not user.is_document_verified and not user.is_superuser:
             messages.warning(
                 request,
-                "Submit your ID and title deed details and wait for verification to unlock this section.",
+                "Submit your National ID, Chief phone number, Title Deed, and house document to unlock this section.",
             )
             return redirect("dashboard:home")
         return view_func(request, *args, **kwargs)
@@ -45,7 +45,7 @@ def owner_dashboard_view(request):
             record.save()
             messages.success(
                 request,
-                "Verification details submitted. Features remain locked until verification is approved.",
+                "Verification details and documents submitted. Navigation links remain locked until verified.",
             )
             return redirect("dashboard:home")
     else:
