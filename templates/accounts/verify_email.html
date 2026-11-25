@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify Email - Househunting Kenya</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-md bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
+    <h1 class="text-2xl font-bold text-slate-900">Verify Your Email</h1>
+    <p class="text-sm text-slate-600 mt-1">
+      Enter the 6-digit verification code sent to <span class="font-semibold">{{ pending_user.email }}</span>.
+    </p>
+
+    {% if messages %}
+      <div class="mt-4 space-y-2">
+        {% for message in messages %}
+          <div class="p-3 rounded-lg text-sm bg-emerald-50 text-emerald-800 border border-emerald-200">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <form method="post" class="mt-6 space-y-4">
+      {% csrf_token %}
+      <div>
+        <label class="block text-sm font-medium text-slate-700">6-Digit OTP Code</label>
+        <input type="text" name="code" maxlength="6" minlength="6" required autofocus placeholder="123456"
+               class="mt-1 w-full text-center tracking-widest text-xl font-bold rounded-lg border border-slate-300 px-3 py-3">
+      </div>
+      <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 rounded-lg text-sm">
+        Verify & Continue to Login
+      </button>
+    </form>
+
+    <form method="post" action="{% url 'accounts:resend_otp' %}" class="mt-4 text-center">
+      {% csrf_token %}
+      <button type="submit" class="text-sm text-emerald-600 hover:underline font-medium">
+        Didn't get the code? Resend OTP
+      </button>
+    </form>
+  </div>
+</body>
+</html>
